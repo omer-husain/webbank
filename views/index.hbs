@@ -1,0 +1,64 @@
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel='stylesheet' type='text/css' href='/css/index.css' />
+
+
+    <title>Web Bank - By Omer Husain</title>
+</head>
+
+<body>
+
+    <header>
+        <h1>Web Bank</h1>
+
+
+    </header>
+
+    <main>
+
+        <section id="loginForm">
+
+            <form method="POST" action="http://127.0.0.1:3000">
+
+                <label for="username">User Name</label>
+                <input type="text" id="username" placeholder="Username" name="username">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Password" name="password">
+
+                <button type="submit" id="submitButton">Submit</button>
+
+                {{#if data.visible}}
+                    <label id="labelMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
+
+                {{else}}
+                    <label id="labelMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
+                {{/if}}
+
+            </form>
+
+        </section>
+
+
+
+
+    </main>
+
+    <footer>
+
+    </footer>
+
+</body>
+
+
+</html>

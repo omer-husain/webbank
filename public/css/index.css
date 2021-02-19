@@ -1,0 +1,49 @@
+h1{
+    font-size: 3em;
+    text-align: center;
+    color: darkred;
+}
+
+
+#loginForm {
+    
+    margin:auto;
+    font-size: 1.3em;
+    width: 30%;
+    color: red;
+    background-color: beige;
+    border: 1px solid;
+    display:block;
+}
+
+
+label {
+    margin: auto;
+    display: block;
+    width: 60%;
+}
+
+input {
+    margin: auto;
+    display: block;
+    width: 60%;
+    color:darkred;
+    
+}
+
+
+#submitButton {
+    margin: auto;
+    display:block;
+    border:darkred 1px solid;
+    border-radius: 10%;
+    color:darkred;
+    
+}
+
+
+
+
+ 
+
+

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel='stylesheet' type='text/css' href='/css/bank.css' />
+    <script src="/js/bank.js"></script>
+    <title>Bank Page</title>
+</head>
+
+
+<nav>
+    <section id="loggedUser">
+        <form action="/" method="http://127.0.0.1:3000">
+            <label id="logName">{{data.user}}</label>
+            <button id="logOut" onclick="logOut()">Log Out</label>
+        </form>
+    </section>
+</nav>
+
+<body>
+
+    <header>
+
+        <h1>XYZ Bank</h1>
+
+
+    </header>
+
+    <main>
+
+
+
+
+        <section id="accountForm">
+
+            <form action="/dummy">
+                <label for="accountNumber">Account Number</label>
+                <input type="text" id="accountNumber" placeholder="Account Number">
+
+
+                <label for="balance">Balance</label>
+                <input type="radio" id="balance" name="select" value="balance">
+
+                <label for="deposit">Deposit</label>
+                <input type="radio" id="deposit" name="select" value="deposit">
+
+                <button>Submit</button>
+
+            </form>
+        </section>
+
+    </main>
+
+</body>
+
+</html>
