@@ -16,6 +16,7 @@
 //reference: npm fsreadfilessyncwritefiles.js
 //reference npm pathjoin.js
 //reference npm express-handlebars.js
+//reference Express reqcookies.js
 
 
 //Other resources
@@ -29,14 +30,21 @@ const express = require("express");
 const exphbs = require("express-handlebars");
 const fs = require("fs");
 const path = require("path");
+const cookieParser = require("cookie-parser");
+
 const app = express();
+//not using body-parser as it as been replaced within express itself as express 4.16 (body-parser is older)
+
 
 
 //line below reference - for post form data - referenced from https://flaviocopes.com/express-forms/
 app.use(express.urlencoded({
     extended: true
+}));
 
-}))
+app.use(express.json());        //parse JSON 
+
+app.use(cookieParser());
 
 var data = readFileData();    //reads user.json file - key value pairings for username and password
 
@@ -60,13 +68,14 @@ app.get("/", (req, res) => {                                           //  Set u
 });
 
 
+app.get("/balance", (req, res) => {                                           //  Set up viewData route to "render" the handlebars file with data
 
-
-app.get("/", (req, res) => {
-
-    res.render('index', {
+    res.render('balance', {                                                //  Invokes the render method on the response (res) object
+        // data: someData
     });
+
 });
+
 
 app.get("*", (req, res) => {
     res.send(`FAILED! Fix your URL.`);
@@ -102,6 +111,16 @@ app.post("/", (req, res) => {
     }
 
 });
+
+
+
+app.post('/bankForm', (req, res) => {
+
+    var selectionValue = req.body.select;
+    console.log(selectionValue);
+
+});
+
 
 
 const server = app.listen(HTTP_PORT, () => {
