@@ -13,7 +13,7 @@
         "accountBalance": 5050.5
     },
     "0000015": {
-        "accountType": "Chequing",
+        "accountType": "Chequing", 
         "accountBalance": 0
     }
 }

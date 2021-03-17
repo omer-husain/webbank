@@ -4,9 +4,9 @@
 
 // Insturctor: George Tsang
 
-// Assignment1 - Web 322 - Web Bank
+// Assignment3 - Web 322 - Web Bank
 
-// Date: February 16, 2021
+// Date: March 15, 2021
 
 
 //references(course materials)
@@ -17,6 +17,7 @@
 //reference npm pathjoin.js
 //reference npm express-handlebars.js
 //reference Express reqcookies.js
+//reference npm express-session.js
 
 
 //Other resources
@@ -30,7 +31,9 @@ const express = require("express");
 const exphbs = require("express-handlebars");
 const fs = require("fs");
 const path = require("path");
-const cookieParser = require("cookie-parser");
+const session = require("express-session");
+const randomSTR = require("randomstring");
+
 
 const app = express();
 //not using body-parser as it as been replaced within express itself as express 4.16 (body-parser is older)
@@ -38,13 +41,9 @@ const app = express();
 
 
 //line below reference - for post form data - referenced from https://flaviocopes.com/express-forms/
-app.use(express.urlencoded({
-    extended: true
-}));
+app.use(urlencoded({ extended: true }));   
 
 app.use(express.json());        //parse JSON 
-
-app.use(cookieParser());
 
 var data = readFileData();    //reads user.json file - key value pairings for username and password
 
