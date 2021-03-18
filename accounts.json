@@ -1,0 +1,47 @@
+{
+    "lastID": "0000022",
+    "0000001": {
+        "accountType": "Savings",
+        "accountBalance": 1174.33
+    },
+    "0000008": {
+        "accountType": "Chequing",
+        "accountBalance": 555.66
+    },
+    "0000010": {
+        "accountType": "Savings",
+        "accountBalance": 5050.5
+    },
+    "0000015": {
+        "accountType": "Chequing",
+        "accountBalance": 1
+    },
+    "0000016": {
+        "accountType": "Savings",
+        "accountBalance": 25
+    },
+    "0000017": {
+        "accountType": "Chequing",
+        "accountBalance": 1353
+    },
+    "0000018": {
+        "accountType": "Chequing",
+        "accountBalance": 0
+    },
+    "0000019": {
+        "accountType": "Chequing",
+        "accountBalance": 0
+    },
+    "0000020": {
+        "accountType": "Savings",
+        "accountBalance": 0
+    },
+    "0000021": {
+        "accountType": "Savings",
+        "accountBalance": 0
+    },
+    "0000022": {
+        "accountType": "Chequing",
+        "accountBalance": 0
+    }
+}

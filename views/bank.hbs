@@ -36,9 +36,9 @@
 
         <section id="accountForm">
 
-            <form action="POST" action="http://127.0.0.1:3000/bankForm">
+            <form method="POST" action="/bankForm">
                 <label for="accountNumber">Account Number</label>
-                <input type="text" id="accountNumber" placeholder="Account Number">
+                <input type="text" id="accountNumber" name="accountNumber" placeholder="Account Number">
 
 
                 <label for="balance">Balance</label>
@@ -55,7 +55,15 @@
                 <label for="withdrawal">Withdrawal</label>
                 <input type="radio" id="withdrawal" name="select" value="withdrawal">
 
-                <button type="submit">Submit</button>
+                <input type="submit" value="OK">
+
+                {{#if data.visible}}
+                    <label id="labelMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
+
+                {{else}}
+                    <label id="labelMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
+                {{/if}}
+                
 
             </form>
         </section>

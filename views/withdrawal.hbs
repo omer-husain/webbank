@@ -2,17 +2,31 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdrawal</title>
-    <link rel="stylesheet" href="/css/partials.css">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Withdraw</title>
+  <link rel="stylesheet" href="/css/partials.css">
 </head>
 
 <body>
-    <!--	placeholder for content from the header.hbs file in the /views/partials directory 
+  <!--	placeholder for content from the header.hbs file in the /views/partials directory 
 		the { { > xxx } } syntax means embed the content of file by the name of xxx.hbs			-->
-    {{>header}}
+  {{>header}}
+
+  <section id="withForm">
+    <form method="POST" action="/withdrawalForm">
+      <label id="accountNumber">Account Number: {{data.accountNum}} </label>
+      <label for="depositAmount">Withdrawal Amount: </label>
+      <input type="text" id="withdrawAmount" name="withdrawAmount">
+      <input type="submit" value="Submit">
+    </form>
+
+    <form action="/returnBank" method="POST">
+      <input type="submit" value="Cancel">
+    </form>
+  </section>
+
 </body>
 
 </html>

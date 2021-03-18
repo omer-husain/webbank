@@ -32,20 +32,22 @@ const exphbs = require("express-handlebars");
 const fs = require("fs");
 const path = require("path");
 const session = require("express-session");
-const randomSTR = require("randomstring");
-
+const bodyParser = require("body-parser");
+const randomStr = require("randomstring");
+const e = require("express");
+const { timeStamp } = require("console");
+const { parse } = require("path");
+const userPath = "./user.json";
+const accountsPath = "./accounts.json";
+var myAccountSelection;
 
 const app = express();
-//not using body-parser as it as been replaced within express itself as express 4.16 (body-parser is older)
 
-
-
-//line below reference - for post form data - referenced from https://flaviocopes.com/express-forms/
-app.use(urlencoded({ extended: true }));   
-
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());        //parse JSON 
 
-var data = readFileData();    //reads user.json file - key value pairings for username and password
+var userData = readFileData(userPath);    //reads user.json file
+var accountsData = readFileData(accountsPath);   //reads accounts.json file
 
 //line below referenced from stackoverflow to properly link CSS and JS files. Also studying in textbook pg. 
 app.use(express.static(path.join(__dirname, '/public')));
@@ -58,39 +60,47 @@ app.engine(".hbs", exphbs({ 												//	1st parameter: "hbs" is to be the int
 
 app.set("view engine", ".hbs");
 
-app.get("/", (req, res) => {                                           //  Set up viewData route to "render" the handlebars file with data
+var strRandom = randomStr.generate();
+
+app.set("trust proxy", 1);
+
+app.use(session({
+    secret: strRandom,
+    saveUninitialized: true,
+    resave: false
+}));
+
+//app.gets 
+
+app.get("/", (req, res) => {
+
+    console.log(req.session);
+
+    req.session.MySession = "Unknown";								// sets a cookie with username value
+
+    var placeholderValues = {
+        usernamefromcookie: "TBD",
+        usernamefromtextbox: "TBD"
+    };
 
     res.render('index', {                                                //  Invokes the render method on the response (res) object
-        // data: someData
+        data: placeholderValues
     });
 
 });
-
-
-app.get("/balance", (req, res) => {                                           //  Set up viewData route to "render" the handlebars file with data
-
-    res.render('balance', {                                                //  Invokes the render method on the response (res) object
-        // data: someData
-    });
-
-});
-
 
 app.get("*", (req, res) => {
     res.send(`FAILED! Fix your URL.`);
 });
 
 
+//app.posts
 app.post("/", (req, res) => {
 
+    console.log(`1. req.session.MySession = ${JSON.stringify(req.session)}`);
 
     var iUsername = req.body.username;
     var iPassword = req.body.password;
-
-
-    var someData = {
-        user: iUsername
-    };
 
     var messageData = {
         message: errorCheck(iUsername, iPassword),
@@ -99,11 +109,20 @@ app.post("/", (req, res) => {
 
     if (userValidation(iUsername, iPassword)) {
 
+        req.session.MySession = req.body.username;
+
+        var someData = {
+            user: req.session.MySession
+        };
+        // sets cookie with entered username value
+        console.log(`2. req.session.MySession = ${JSON.stringify(req.session)}`);
         res.render('bank', {                                                //  Invokes the render method on the response (res) object
             data: someData
         });
 
     } else {
+
+        console.log(`3. req.session.MySession = ${JSON.stringify(req.session)}`);
         res.render('index', {
             data: messageData
         });
@@ -116,10 +135,93 @@ app.post("/", (req, res) => {
 app.post('/bankForm', (req, res) => {
 
     var selectionValue = req.body.select;
+    var accountNum = req.body.accountNumber;
     console.log(selectionValue);
+
+    var messageData = {
+        message: errorMessage(3),
+        visible: true
+    };
+
+    // if (selectionValue == "openAccount") {
+    //     selectionRender("openAccount", res, null, null);
+    // }
+    if (selectionValue == "openAccount") {
+        res.render('accountopen', {
+        });
+    }
+
+    if (checkValidAccount(accountNum) && selectionValue !== "openAccount") {
+        myAccount = formatAccNumber(accountNum);
+        console.log(myAccount);
+        selectionRender(selectionValue, res, myAccount);    //invokes function to render appropriate page based on user selection
+        myAccountSelection = myAccount;
+    }
+    else {
+        res.render('bank', {
+            data: messageData
+        });
+
+    }
+
 
 });
 
+app.post("/returnBank", (req, res) => {
+
+    var someData = {
+        user: req.session.MySession
+    };
+
+    res.render('bank', {
+        data: someData
+    });
+
+});
+
+app.post('/accountOpen', (req, res) => {
+    var type = req.body.accountSelection;
+    var btnCancel = req.body.btCancel;
+
+    var acctNum = createAcctNum();
+    console.log("This data is being fed into createAccount function" + acctNum);
+    createAccount(acctNum, type);
+
+});
+
+app.post('/depositForm', (req, res) => {
+
+    var amount = req.body.depositAmount;
+    console.log(amount);
+
+    tempObj = readFileData(accountsPath);
+
+    if (myAccountSelection == "") {
+        console.log("Account not correctly selected")
+    }
+    else {
+        depositAccount(myAccountSelection, amount)
+    }
+
+
+});
+
+app.post('/withdrawalForm', (req, res) => {
+
+    var amount = req.body.withdrawAmount;
+    console.log(amount);
+
+    tempObj = readFileData(accountsPath);
+
+    if (myAccountSelection == "") {
+        console.log("Account not correctly selected")
+    }
+    else {
+        withdrawAccount(myAccountSelection, amount)
+    }
+
+
+});
 
 
 const server = app.listen(HTTP_PORT, () => {
@@ -129,14 +231,15 @@ const server = app.listen(HTTP_PORT, () => {
 
 
 //functions
-function readFileData() {
-    var rawData = fs.readFileSync("./user.json");
+function readFileData(path) {
+    var rawData = fs.readFileSync(path);
     var data = JSON.parse(rawData);
     return data;
 }
 
-function writeFileData(data) {
-    fs.writeFile("test1.json", JSON.stringify(data, null, 4), function (err) {
+//./accounts.json
+function writeFileData(data, path) {
+    fs.writeFile(path, JSON.stringify(data, null, 4), function (err) {
         if (err) throw err;
 
         console.log("File successfully updated.");
@@ -151,8 +254,8 @@ function displayObjectData(data) {
 
 
 function userValidation(username, password) {
-    userCheck = data.hasOwnProperty(username);        //boolean variables
-    passCheck = (data[username] === password);   //boolean variables
+    userCheck = userData.hasOwnProperty(username);        //boolean variables
+    passCheck = (userData[username] === password);   //boolean variables
 
     if (userCheck && passCheck) {
         console.log(username, " is validated");
@@ -167,12 +270,12 @@ function userValidation(username, password) {
 
 
 function errorCheck(username, password) {
-    if (data.hasOwnProperty(username) === false) {
+    if (userData.hasOwnProperty(username) === false) {
         return errorMessage(1);
     }
 
-    if (data.hasOwnProperty(username) === true) {
-        if (data[username] !== password) {
+    if (userData.hasOwnProperty(username) === true) {
+        if (userData[username] !== password) {
             return errorMessage(2);
         }
     }
@@ -190,6 +293,10 @@ function errorMessage(code) {
             errorString = "Invalid password";
             return errorString;
             break;
+        case 3:
+            errorString = "Invalid Account Number";
+            return errorString;
+            break;
         default:
             errorString = "Unknown Error";
             return errorString;
@@ -197,4 +304,172 @@ function errorMessage(code) {
     }
 
 }
+
+function selectionRender(selection, res, myAccount) {
+
+    tempObj = readFileData(accountsPath);
+
+    var accountID = { accountID: myAccount };
+    accountData = tempObj[myAccount];
+
+    console.log(accountData);
+
+    switch (selection) {
+        case "balance":
+            console.log(myAccount);
+            res.render('balance', {
+                data: accountData,
+                data1: accountID
+            });
+            console.log(accountsData);
+            break;
+        case "deposit":
+            res.render('deposit', {
+                data: accountData,
+                data1: accountID
+            });
+            break;
+
+        case "withdrawal":
+            res.render('withdrawal', {
+                data: accountData,
+                data1: accountID
+            });
+            break;
+        default:
+            res.render('bank', {
+            });
+    }
+}
+
+function checkValidAccount(accountNum) {   // checks if account is in accountsData javascript object
+
+    if (accountsData.hasOwnProperty(formatAccNumber(accountNum))) {
+        //create an myAccount object with all necessary data needed to render
+        return true;
+    }
+    else {
+        console.log("not valid account number");
+        myAccount = null;
+        return false;
+    }
+
+}
+
+
+function formatAccNumber(number, size = 7) {   //Function to add leading zero(s)   default value is of size is 7 to match account data
+
+    formatNumber = number.padStart(size, '0');
+    return formatNumber;
+
+}
+
+
+function depositAccount(acctNum, amount) {
+
+
+    var balance = tempObj[acctNum].accountBalance;
+
+    console.log("balance before: " + balance);
+
+    balance = parseFloat(balance, 10);
+    amount = parseFloat(amount, 10);
+
+    console.log("balance float: " + balance);
+
+    balance = balance + amount;
+
+    console.log("after addition balance: " + balance);
+
+    tempObj[acctNum] = { "accountType": tempObj[acctNum].accountType, "accountBalance": balance };
+
+    console.log(tempObj);
+
+    writeFileData(tempObj, accountsPath);
+
+
+}
+
+function withdrawAccount(acctNum, amount) {
+    var balance = tempObj[acctNum].accountBalance;
+
+    console.log("balance before: " + balance);
+
+    balance = parseFloat(balance, 10);
+    amount = parseFloat(amount, 10);
+
+    console.log("balance float: " + balance);
+
+    if (amount > balance) {
+        console.log("Cannot Withdrawal more than Account Balance");
+    }
+
+    else {
+        balance = balance - amount;
+
+        console.log("after subtraction balance: " + balance);
+
+        tempObj[acctNum] = { "accountType": tempObj[acctNum].accountType, "accountBalance": balance };
+
+        console.log(tempObj);
+
+        writeFileData(tempObj, accountsPath);
+    }
+
+
+
+
+}
+
+function createAccount(acctNum, type) {
+
+    var change = false;
+    tempObj = readFileData(accountsPath);
+
+    if (tempObj.hasOwnProperty("acctNum"))
+        change = false;
+    else {
+        (tempObj[acctNum] = { "accountType": type, "accountBalance": 0.0 });
+        change = true;
+    }
+
+    if (change) {
+        tempObj["lastID"] = acctNum;
+        writeFileData(tempObj, accountsPath);
+    }
+
+
+    console.log(tempObj);
+}
+
+function checkLastID() {
+    tempObj = readFileData(accountsPath);
+    lastID = tempObj["lastID"];
+    console.log("Last ID is: " + lastID);
+    return lastID;
+}
+
+function createAcctNum() {
+    tempObj = readFileData(accountsPath);
+    lastID = checkLastID();
+    var tempNum;
+    var acctNumber;
+    tempNum = parseInt(lastID, 10);
+    tempNum++;
+    acctNumber = tempNum.toString();
+
+    acctNumber = formatAccNumber(acctNumber);
+
+    while (tempObj.hasOwnProperty(acctNumber)) {
+        console.log("Account number already exists: " + tempObj.hasOwnProperty(acctNumber));
+        tempNum++;
+        acctNumber = tempNum.toString();
+    }
+
+    acctNumber = formatAccNumber(acctNumber);
+    console.log(acctNumber);
+    return acctNumber;
+}
+
+
 

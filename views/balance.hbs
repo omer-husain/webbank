@@ -15,13 +15,14 @@
     {{>header}}
 
     <section id="accountInfo">
-        <label id="accountNumber">Account Number</label>
-        <input type="text" input>
-        <label id="accountType">Account Type</label>
-        <label id="accountBalance">Account Balance</label>
-    </section>
-    <button>Return to Banking Page</button>
 
+        <form method="POST" action="/returnBank">
+            <label id="accountNumber">Account Number: {{data1.accountID}} </label>
+            <label id="accountType">Account Type: {{data.accountType}} </label>
+            <label id="accountBalance">Account Balance: {{data.accountBalance}}</label>
+            <button>Return to Bank Menu</button>
+        </form>
+    </section>
 </body>
 
 </html>
