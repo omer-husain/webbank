@@ -17,7 +17,8 @@
 //reference npm pathjoin.js
 //reference npm express-handlebars.js
 //reference Express reqcookies.js
-//reference npm express-session.js
+//reference npm client-sessions.js
+//https://www.npmjs.com/package/express-session
 
 
 //Other resources
@@ -31,7 +32,7 @@ const express = require("express");
 const exphbs = require("express-handlebars");
 const fs = require("fs");
 const path = require("path");
-const session = require("express-session");
+const session = require("client-sessions");
 const bodyParser = require("body-parser");
 const randomStr = require("randomstring");
 const e = require("express");
@@ -62,29 +63,26 @@ app.set("view engine", ".hbs");
 
 var strRandom = randomStr.generate();
 
-app.set("trust proxy", 1);
+//reference from course materials - npm client-sessions.js
+app.use(session({															//	add session handler middleware
 
-app.use(session({
-    secret: strRandom,
-    saveUninitialized: true,
-    resave: false
+    cookieName: "MySession",
+    secret: strRandom,      												//	random string
+    duration: 5 * 60 * 1000,												//	5 minutes
+    activeDuration: 1 * 60 * 1000,											//	1 minutes
+    httpOnly: true,                                                         //  prevents browser JavaScript from accessing cookies
+    secure: true,                                                           //  ensures cookies are only used over https
+    ephemeral: true                                                         //  deletes the cookie when the browser is closed
+
 }));
+
 
 //app.gets 
 
 app.get("/", (req, res) => {
 
-    console.log(req.session);
-
-    req.session.MySession = "Unknown";								// sets a cookie with username value
-
-    var placeholderValues = {
-        usernamefromcookie: "TBD",
-        usernamefromtextbox: "TBD"
-    };
-
+    req.MySession.user = "Unknown";
     res.render('index', {                                                //  Invokes the render method on the response (res) object
-        data: placeholderValues
     });
 
 });
@@ -96,9 +94,6 @@ app.get("*", (req, res) => {
 
 //app.posts
 app.post("/", (req, res) => {
-
-    console.log(`1. req.session.MySession = ${JSON.stringify(req.session)}`);
-
     var iUsername = req.body.username;
     var iPassword = req.body.password;
 
@@ -109,20 +104,19 @@ app.post("/", (req, res) => {
 
     if (userValidation(iUsername, iPassword)) {
 
-        req.session.MySession = req.body.username;
+        req.MySession.user = req.body.username;
 
         var someData = {
-            user: req.session.MySession
+            user: req.MySession.user
         };
-        // sets cookie with entered username value
-        console.log(`2. req.session.MySession = ${JSON.stringify(req.session)}`);
+
+
         res.render('bank', {                                                //  Invokes the render method on the response (res) object
             data: someData
         });
 
     } else {
 
-        console.log(`3. req.session.MySession = ${JSON.stringify(req.session)}`);
         res.render('index', {
             data: messageData
         });
@@ -130,28 +124,27 @@ app.post("/", (req, res) => {
 
 });
 
-
-
 app.post('/bankForm', (req, res) => {
 
     var selectionValue = req.body.select;
     var accountNum = req.body.accountNumber;
+
+
     console.log(selectionValue);
 
     var messageData = {
-        message: errorMessage(3),
-        visible: true
+        message: statusMessage(3),
+        visible: true,
+        user: req.MySession.user
     };
 
-    // if (selectionValue == "openAccount") {
-    //     selectionRender("openAccount", res, null, null);
-    // }
-    if (selectionValue == "openAccount") {
+    if (selectionValue == "openAccount" && accountNum == "") {
         res.render('accountopen', {
         });
+        return;   //exits POST function
     }
 
-    if (checkValidAccount(accountNum) && selectionValue !== "openAccount") {
+    if (checkValidAccount(accountNum) && selectionValue !== "openAccount" && selectionValue !== "") {
         myAccount = formatAccNumber(accountNum);
         console.log(myAccount);
         selectionRender(selectionValue, res, myAccount);    //invokes function to render appropriate page based on user selection
@@ -170,7 +163,7 @@ app.post('/bankForm', (req, res) => {
 app.post("/returnBank", (req, res) => {
 
     var someData = {
-        user: req.session.MySession
+        user: req.MySession.user
     };
 
     res.render('bank', {
@@ -180,12 +173,11 @@ app.post("/returnBank", (req, res) => {
 });
 
 app.post('/accountOpen', (req, res) => {
+    console.log("account open");
     var type = req.body.accountSelection;
-    var btnCancel = req.body.btCancel;
-
     var acctNum = createAcctNum();
-    console.log("This data is being fed into createAccount function" + acctNum);
-    createAccount(acctNum, type);
+    console.log("This data is being fed into createAccount:  " + acctNum);
+    createAccount(acctNum, type, req, res);
 
 });
 
@@ -201,7 +193,15 @@ app.post('/depositForm', (req, res) => {
     }
     else {
         depositAccount(myAccountSelection, amount)
+        var someData = {
+            user: req.MySession.user
+        };
+
+        res.render('bank', {
+            data: someData
+        });
     }
+
 
 
 });
@@ -211,18 +211,25 @@ app.post('/withdrawalForm', (req, res) => {
     var amount = req.body.withdrawAmount;
     console.log(amount);
 
-    tempObj = readFileData(accountsPath);
-
     if (myAccountSelection == "") {
         console.log("Account not correctly selected")
     }
     else {
-        withdrawAccount(myAccountSelection, amount)
+        withdrawAccount(myAccountSelection, amount, req, res)
     }
 
 
 });
 
+
+app.post("/reset", (req, res) => {
+
+    req.MySession.reset();
+
+    res.render('index', {
+    });
+
+});
 
 const server = app.listen(HTTP_PORT, () => {
     console.log(`Listening on port ${HTTP_PORT}`);
@@ -271,35 +278,40 @@ function userValidation(username, password) {
 
 function errorCheck(username, password) {
     if (userData.hasOwnProperty(username) === false) {
-        return errorMessage(1);
+        return statusMessage(1);
     }
 
     if (userData.hasOwnProperty(username) === true) {
         if (userData[username] !== password) {
-            return errorMessage(2);
+            return statusMessage(2);
         }
     }
 }
 
 
-function errorMessage(code) {
+function statusMessage(code) {
 
     switch (code) {
         case 1:
-            errorString = "Not a registered username";
-            return errorString;
+            string = "Not a registered username";
+            return string;
             break;
         case 2:
-            errorString = "Invalid password";
-            return errorString;
+            string = "Invalid password";
+            return string;
             break;
         case 3:
-            errorString = "Invalid Account Number";
-            return errorString;
+            string = "Invalid Account Number";
+            return string;
             break;
+        case 4:
+            string = "Insufficient Funds";
+            return string;
+            break;
+
         default:
-            errorString = "Unknown Error";
-            return errorString;
+            string = "Unknown Error";
+            return string;
 
     }
 
@@ -316,7 +328,6 @@ function selectionRender(selection, res, myAccount) {
 
     switch (selection) {
         case "balance":
-            console.log(myAccount);
             res.render('balance', {
                 data: accountData,
                 data1: accountID
@@ -390,8 +401,19 @@ function depositAccount(acctNum, amount) {
 
 }
 
-function withdrawAccount(acctNum, amount) {
+function withdrawAccount(acctNum, amount, req, res) {
     var balance = tempObj[acctNum].accountBalance;
+
+    var messageData = {
+        message: statusMessage(4),
+        visible: true,
+        user: req.MySession.user
+    };
+
+    var userData = {
+        user: req.MySession.user
+    }
+
 
     console.log("balance before: " + balance);
 
@@ -402,6 +424,11 @@ function withdrawAccount(acctNum, amount) {
 
     if (amount > balance) {
         console.log("Cannot Withdrawal more than Account Balance");
+
+        res.render('bank', {
+            data: messageData
+        });
+
     }
 
     else {
@@ -414,6 +441,11 @@ function withdrawAccount(acctNum, amount) {
         console.log(tempObj);
 
         writeFileData(tempObj, accountsPath);
+
+        res.render('bank', {
+            data: userData
+        });
+
     }
 
 
@@ -421,7 +453,7 @@ function withdrawAccount(acctNum, amount) {
 
 }
 
-function createAccount(acctNum, type) {
+function createAccount(acctNum, type, req, res) {
 
     var change = false;
     tempObj = readFileData(accountsPath);
@@ -436,6 +468,22 @@ function createAccount(acctNum, type) {
     if (change) {
         tempObj["lastID"] = acctNum;
         writeFileData(tempObj, accountsPath);
+
+        var someData = {
+            user: req.MySession.user
+        }
+
+        var messageData = {
+            accountID: acctNum,
+            accountType: type,
+            visible: true
+        };
+
+        res.render('bank', {
+            data: someData,
+            data1: messageData
+        });
+
     }
 
 

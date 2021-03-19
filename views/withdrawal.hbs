@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Withdraw</title>
-  <link rel="stylesheet" href="/css/partials.css">
+  <link rel="stylesheet" href="/css/bank.css">
 </head>
 
 <body>
@@ -14,10 +14,10 @@
 		the { { > xxx } } syntax means embed the content of file by the name of xxx.hbs			-->
   {{>header}}
 
-  <section id="withForm">
+  <section class="blockForm">
     <form method="POST" action="/withdrawalForm">
       <label id="accountNumber">Account Number: {{data.accountNum}} </label>
-      <label for="depositAmount">Withdrawal Amount: </label>
+      <label for="withdrawAmount">Withdrawal Amount: </label>
       <input type="text" id="withdrawAmount" name="withdrawAmount">
       <input type="submit" value="Submit">
     </form>
@@ -25,6 +25,13 @@
     <form action="/returnBank" method="POST">
       <input type="submit" value="Cancel">
     </form>
+
+    {{#if data.visible}}
+    <label id="withdrawMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
+
+    {{else}}
+    <label id="withdrawMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
+    {{/if}}
   </section>
 
 </body>

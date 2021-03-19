@@ -13,9 +13,9 @@
 
 <nav>
     <section id="loggedUser">
-        <form method="GET" action="/">
+        <form method="POST" action="/reset">
             <label id="logName">{{data.user}}</label>
-            <button id="logOut" onclick="logOut()">Log Out</label>
+            <button id="logOut">Log Out</label>
         </form>
     </section>
 </nav>
@@ -31,10 +31,7 @@
 
     <main>
 
-
-
-
-        <section id="accountForm">
+        <section class="blockForm">
 
             <form method="POST" action="/bankForm">
                 <label for="accountNumber">Account Number</label>
@@ -57,13 +54,26 @@
 
                 <input type="submit" value="OK">
 
+
+                {{!-- error messages --}}
                 {{#if data.visible}}
-                    <label id="labelMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
+                <label id="labelMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
 
                 {{else}}
-                    <label id="labelMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
+                <label id="labelMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
                 {{/if}}
-                
+
+                {{!-- account open message --}}
+                {{#if data1.visible}}
+                <label id="accountCreated" style="visibility:visible;">“{{data1.accountType}} Account
+                    #{{data1.accountID}}
+                    Created”
+                </label>
+
+                {{else}}
+                <label id="accountCreated" style="visibility: hidden;"></label>
+                {{/if}}
+
 
             </form>
         </section>

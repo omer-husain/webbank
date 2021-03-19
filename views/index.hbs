@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel='stylesheet' type='text/css' href='/css/index.css' />
+    <link rel='stylesheet' type='text/css' href='/css/bank.css' />
 
 
     <title>Web Bank - By Omer Husain</title>
@@ -16,14 +16,14 @@
     <header>
         <!--	placeholder for content from the header.hbs file in the /views/partials directory 
 		the { { > xxx } } syntax means embed the content of file by the name of xxx.hbs			-->
-		{{>header}}
+        {{>header}}
 
 
     </header>
 
     <main>
 
-        <section id="loginForm">
+        <section class="blockForm">
 
             <form method="POST" action="/">
 
@@ -36,10 +36,10 @@
                 <button type="submit" id="submitButton">Submit</button>
 
                 {{#if data.visible}}
-                    <label id="labelMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
+                <label id="labelMessage" style="visibility:visible;">Error Message: {{data.message}}</label>
 
                 {{else}}
-                    <label id="labelMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
+                <label id="labelMessage" style="visibility: hidden;">Error Message: {{data.message}}</label>
                 {{/if}}
 
             </form>

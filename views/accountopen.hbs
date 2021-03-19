@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/css/partials.css">
+  <link rel="stylesheet" href="/css/bank.css">
   <title>Account open</title>
 </head>
 
@@ -14,40 +14,38 @@
 		the { { > xxx } } syntax means embed the content of file by the name of xxx.hbs			-->
   {{>header}}
 
-  <section id="AccountOpenForm">
+  <section class="blockForm">
     <form action="/accountOpen" method="POST">
-      < <label for="chequing">Chequing:</label>
-        <input type="radio" id="chequing" name="accountSelection" value="Chequing" onclick="checkSubmit()">
-        <label for="savings">Savings: </label>
-        <input type="radio" id="savings" name="accountSelection" value="Savings" onclick="checkSubmit()">
-        <input type="submit" value="Submit" id="btSubmit" disabled>
+      <label for="chequing">Chequing:</label>
+      <input type="radio" id="chequing" name="accountSelection" value="Chequing" onclick="checkSubmit()">
+      <label for="savings">Savings: </label>
+      <input type="radio" id="savings" name="accountSelection" value="Savings" onclick="checkSubmit()">
+      <input type="submit" value="Submit" id="btSubmit" disabled>
     </form>
 
-    {{!-- <form action="/returnBank" method="POST">
-      <input type="submit" value="Cancel" id="btCancel">
+    <form action="/returnBank" method="POST">
+
+      <input type="submit" value="Cancel">
+
+
     </form>
-  </section> --}}
-
-  <section>
-    <label id="responseMessage" hidden></label>
-  </section>
 
 
-  <script>
+    <script>
 
-    function checkSubmit() {
-      var bt = document.getElementById('btSubmit');
-      if ((document.getElementById("chequing").checked) || (document.getElementById("savings").checked)) {
-        bt.disabled = false;
+      function checkSubmit() {
+        var bt = document.getElementById('btSubmit');
+        if ((document.getElementById("chequing").checked) || (document.getElementById("savings").checked)) {
+          bt.disabled = false;
+        }
+
+        else {
+          bt.disabled = true;
+        }
+
       }
 
-      else {
-        bt.disabled = true;
-      }
-
-    }
-
-  </script>
+    </script>
 
 
 </body>

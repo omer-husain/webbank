@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deposit</title>
-  <link rel="stylesheet" href="/css/partials.css">
+  <link rel="stylesheet" href="/css/bank.css">
 </head>
 
 <body>
@@ -14,7 +14,7 @@
 		the { { > xxx } } syntax means embed the content of file by the name of xxx.hbs			-->
   {{>header}}
 
-  <section id="depositForm">
+  <section class="blockForm">
     <form method="POST" action="/depositForm">
       <label id="accountNumber">Account Number: {{data.accountNum}} </label>
       <label for="depositAmount">Deposit Amount: </label>
