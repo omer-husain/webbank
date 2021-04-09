@@ -6,7 +6,7 @@
 
 // Assignment3 - Web 322 - Web Bank
 
-// Date: March 15, 2021
+// Date: April 13, 2021
 
 
 //references(course materials)
@@ -40,6 +40,7 @@ const { timeStamp } = require("console");
 const { parse } = require("path");
 const userPath = "./user.json";
 const accountsPath = "./accounts.json";
+const maxAccountLimit = 2;              //max accounts allowed per user
 var myAccountSelection;
 
 const app = express();

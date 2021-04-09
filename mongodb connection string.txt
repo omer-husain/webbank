@@ -1,0 +1,1 @@
+mongodb+srv://omer_husain:<password>@clientcollection.ftofq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
