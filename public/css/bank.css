@@ -39,7 +39,7 @@ label {
     margin: 0;
 }
 
-input[type=text], input[type=password]   {
+input[type=text], input[type=password], select   {
     
     width: 75%;
     color:darkred;

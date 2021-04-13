@@ -31,12 +31,24 @@
 
     <main>
 
-        <section class="blockForm">
+        <section class="blockForm" onload="  ">
+            <script>
+                accounts = {{ data.accounts }};
+            </script>
 
             <form method="POST" action="/bankForm">
-                <label for="accountNumber">Account Number</label>
-                <input type="text" id="accountNumber" name="accountNumber" placeholder="Account Number">
 
+                <label for="accountsList">Accounts</label>
+                <select id="accountsList" name="accountsList">
+
+                    {{#if data.accounts}}
+                    {{#each data.accounts}}
+                    <option value="{{this}}">{{@key}} Account # {{this}}</option>
+                    {{/each}}
+                    {{else}}
+                    <option value="null">User has no Accounts to Display</option>
+                    {{/if}}
+                </select>
 
                 <label for="balance">Balance</label>
                 <input type="radio" id="balance" name="select" value="balance">
