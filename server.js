@@ -26,7 +26,6 @@
 //https://stackoverflow.com/questions/45395947/what-is-the-proper-way-of-referencing-css-and-js-files-with-handlebars
 //https://flaviocopes.com/express-forms/
 
-
 const HTTP_PORT = process.env.PORT || 3000;
 const express = require("express");
 const exphbs = require("express-handlebars");
@@ -44,6 +43,7 @@ const maxAccountLimit = 2;              //max accounts allowed per user
 var myAccountSelection;
 var userData = {};          //variable used to store user's data from mongoDB
 var userAccountsOnly = {}; //varaible to store user's accounts only
+var userAccountType;   //user account type
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -61,39 +61,6 @@ const objCollection = "Client Collection";
 
 
 
-
-async function insertUserAccountsDB(acctNum, type) {
-
-    //this function will update mongodb with new created accounts
-
-    let db, result;
-
-    try {
-        const client = await MongoClient.connect(uri);
-        db = client.db(dbName);
-    } catch (err) {
-        console.log(`err = ${err}`);
-    }
-
-    try {
-        result = await db.collection(objCollection).findOneAndUpdate(
-            { Username: userData['Username'] },
-            {
-                $set:                                                     //  use $set to ensure only the identified fields are affected
-                    { 'Chequing': acctNum }
-
-            },
-            { returnOriginal: false }                                  //  false = returns the updated doc; true = returns the original doc
-        );
-        console.log(result);
-    } catch (err) {
-        console.log(`err = ${err}`);
-    }
-
-    // db.close();
-
-
-}
 
 //line below referenced from stackoverflow to properly link CSS and JS files. Also studying in textbook pg. 
 app.use(express.static(path.join(__dirname, '/public')));
@@ -155,7 +122,7 @@ app.post("/", (req, res) => {
 
             console.log(`user data captured from mongo for user: ${userData.Username}`);
 
-            updateUserAccounts(req, res);
+            updateUserAccounts();
 
             var someData = {
                 user: req.MySession.user,
@@ -238,10 +205,10 @@ app.post("/returnBank", (req, res) => {
 
 app.post('/accountOpen', (req, res) => {
     console.log("account open");
-    var type = req.body.accountSelection;
+    userAccountType = req.body.accountSelection;
     var acctNum = createAcctNum();
     console.log("This data is being fed into createAccount:  " + acctNum);
-    createAccount(acctNum, type, req, res);
+    createAccount(acctNum, userAccountType, req, res);
 
 });
 
@@ -521,7 +488,7 @@ function withdrawAccount(acctNum, amount, req, res) {
 
 
 
-function createAccount(acctNum, type, req, res) {
+function createAccount(acctNum, userAccountType, req, res) {
     let tempObj = {};
     var change = false;
     tempObj = readFileData(accountsPath);
@@ -529,7 +496,7 @@ function createAccount(acctNum, type, req, res) {
     if (tempObj.hasOwnProperty("acctNum"))
         change = false;
     else {
-        (tempObj[acctNum] = { "accountType": type, "accountBalance": 0.0 });
+        (tempObj[acctNum] = { "accountType": userAccountType, "accountBalance": 0.0 });
         change = true;
     }
 
@@ -537,11 +504,11 @@ function createAccount(acctNum, type, req, res) {
         tempObj["lastID"] = acctNum;
         writeFileData(tempObj, accountsPath);
 
-        insertUserAccountsDB(acctNum, type).then(() => {
-            console.log(`${type} Account # ${acctNum} saved to mongoDB`);
+        insertUserAccountsDB(acctNum, userAccountType).then(() => {
+            console.log(`${userAccountType} Account # ${acctNum} saved to mongoDB`);
             getUserDataDB(userData['Username']).then(() => {
 
-                updateUserAccounts(res, req);
+                updateUserAccounts();
 
                 var someData = {
                     user: req.MySession.user,
@@ -550,7 +517,7 @@ function createAccount(acctNum, type, req, res) {
 
                 var messageData = {
                     accountID: acctNum,
-                    accountType: type,
+                    accountType: userAccountType,
                     visible: true
                 };
 
@@ -599,7 +566,7 @@ function createAcctNum() {
 
 function canCreateAccount(userData) {
     if (canCreateChequing(userData) || canCreateSavings(userData)) {
-        if (checkNumAccounts(userData) < 2) {
+        if (checkNumAccounts(userData) < maxAccountLimit) {
             return true;
         }
     }
@@ -664,7 +631,7 @@ async function getUserDataDB(user) {  //gets user related  data from database an
 
 }
 
-function updateUserAccounts(req, res) {
+function updateUserAccounts() {
 
     if (userData['Chequing']) {
         console.log(userData['Chequing']);
@@ -680,5 +647,44 @@ function updateUserAccounts(req, res) {
     }
 
     console.log(userAccountsOnly);
+
+}
+
+
+async function insertUserAccountsDB(acctNum, userAccountType) {
+
+    //this function will update mongodb with new created accounts
+
+    var updateValue = {};    // using to update object (otherwise creates new field)
+    updateValue[userAccountType] = acctNum;
+
+    let db, result;
+
+    try {
+
+        const client = await MongoClient.connect(uri);
+        db = client.db(dbName);
+    } catch (err) {
+        console.log(`err = ${err}`);
+    }
+
+    try {
+
+        result = await db.collection(objCollection).findOneAndUpdate(
+            { Username: userData['Username'] },
+            {
+                $set: updateValue                                                     //  use $set to ensure only the identified fields are affected
+
+
+            },
+            { returnOriginal: false }                                  //  false = returns the updated doc; true = returns the original doc
+        );
+        console.log(result);
+    } catch (err) {
+        console.log(`err = ${err}`);
+    }
+
+    // db.close();
+
 
 }
