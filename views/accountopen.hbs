@@ -16,11 +16,16 @@
 
   <section class="blockForm">
     <form action="/accountOpen" method="POST">
+      {{#if data.chequing}}
       <label for="chequing">Chequing:</label>
       <input type="radio" id="chequing" name="accountSelection" value="Chequing" onclick="checkSubmit()">
+      {{/if}}
+      {{#if data.savings}}
       <label for="savings">Savings: </label>
       <input type="radio" id="savings" name="accountSelection" value="Savings" onclick="checkSubmit()">
-      <input type="submit" value="Submit" id="btSubmit" disabled>
+      {{/if}}
+
+      <input type="submit" value="Submit" id="btSubmit">
     </form>
 
     <form action="/returnBank" method="POST">

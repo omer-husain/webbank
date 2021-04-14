@@ -72,6 +72,8 @@ app.set("view engine", ".hbs");
 
 var strRandom = randomStr.generate();
 
+
+
 //reference from course materials - npm client-sessions.js
 app.use(session({															//	add session handler middleware
 
@@ -165,9 +167,16 @@ app.post('/bankForm', (req, res) => {
     console.log(`the user has ${checkNumAccounts(userDataDB)}`);
     console.log(`Can create account? : ${canCreateAccount(userDataDB)}`)
 
+    var accData = {
+        chequing: canCreateChequing(userDataDB),
+        savings: canCreateSavings(userDataDB)
+    };
 
     if (selectionValue == "openAccount" && canCreateAccount(userDataDB)) {
-        res.render('accountopen', {});
+        res.render('accountopen', {
+            data: accData
+
+        });
         return;   //exits POST function
     }
 
@@ -203,7 +212,7 @@ app.post("/returnBank", (req, res) => {
 app.post('/accountOpen', (req, res) => {
     console.log("account open");
     userAccountType = req.body.accountSelection;
-    var acctNum = createAcctNum(req, res);
+    var acctNum = createAcctNum();
     console.log("This data is being fed into createAccount:  " + acctNum);
     createAccount(acctNum, userAccountType, req, res);
 
@@ -253,7 +262,11 @@ app.post('/withdrawalForm', (req, res) => {
 
 app.post("/reset", (req, res) => {
 
+
+
+    req.MySession.user = "Unknown";
     req.MySession.reset();
+
 
     res.render('index', {
     });
@@ -539,24 +552,24 @@ function checkLastID() {
     return lastID;
 }
 
-function createAcctNum(req, res) {
+function createAcctNum() {
     tempObj = readFileData(accountsPath);
     lastID = checkLastID();
     var tempNum;
     var acctNumber;
 
-    if (canCreateChequing(userDataDB)) {
+    if (canCreateChequing(userDataDB) && !(canCreateSavings(userDataDB))) {
         console.log("account number should be subtracted by 1");
         tempNum = parseInt(userAccountsOnly['Savings'], 10);
         tempNum = tempNum - 1;
         acctNumber = tempNum.toString();
-    } else if (canCreateSavings(userDataDB)) {
+    } else if (canCreateSavings(userDataDB) && !(canCreateChequing(userDataDB))) {
         console.log("account number should be added by 1");
         tempNum = parseInt(userAccountsOnly['Chequing'], 10);
         tempNum = tempNum + 1;
         acctNumber = tempNum.toString();
     } else {
-        console.log("account number should be brand new");
+        console.log("account number should be brand new set");
         tempNum = parseInt(lastID, 10);
         if (tempNum % 2 === 0) {
             tempNum += 9;
@@ -572,6 +585,7 @@ function createAcctNum(req, res) {
         tempNum++;
         acctNumber = tempNum.toString();
     }
+
     acctNumber = formatAccNumber(acctNumber);
 
 
