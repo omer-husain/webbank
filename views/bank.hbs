@@ -31,7 +31,7 @@
 
     <main>
 
-        <section class="blockForm" onload="  ">
+        <section class="blockForm">
             <script>
                 accounts = {{ data.accounts }};
             </script>
@@ -51,20 +51,20 @@
                 </select>
 
                 <label for="balance">Balance</label>
-                <input type="radio" id="balance" name="select" value="balance">
+                <input type="radio" id="balance" name="select" value="balance" onclick="checkSubmit()">
 
                 <label for="deposit">Deposit</label>
-                <input type="radio" id="deposit" name="select" value="deposit">
+                <input type="radio" id="deposit" name="select" value="deposit" onclick="checkSubmit()">
 
 
                 <label for="openAccount">Open an Account</label>
-                <input type="radio" id="openAccount" name="select" value="openAccount">
+                <input type="radio" id="openAccount" name="select" value="openAccount" onclick="checkSubmit()">
 
 
                 <label for="withdrawal">Withdrawal</label>
-                <input type="radio" id="withdrawal" name="select" value="withdrawal">
+                <input type="radio" id="withdrawal" name="select" value="withdrawal" onclick="checkSubmit()">
 
-                <input type="submit" value="OK">
+                <input type="submit" value="OK" id="btSubmit" disabled>
 
 
                 {{!-- error messages --}}
@@ -88,9 +88,32 @@
 
 
             </form>
+
+            <script>
+
+                function checkSubmit() {
+                    var bt = document.getElementById('btSubmit');
+                    bt.disabled = true;
+                    if (
+                        (document.getElementById("balance").checked) ||
+                        (document.getElementById("deposit").checked) ||
+                        (document.getElementById("openAccount").checked) ||
+                        (document.getElementById("withdrawal").checked)
+                    ) {
+                        bt.disabled = false;
+                    }
+
+                    else {
+                        bt.disabled = true;
+                    }
+
+                }
+
+            </script>
         </section>
 
     </main>
+
 
 </body>
 

@@ -41,7 +41,7 @@ const userPath = "./user.json";
 const accountsPath = "./accounts.json";
 const maxAccountLimit = 2;              //max accounts allowed per user
 var myAccountSelection;
-var userData = {};          //variable used to store user's data from mongoDB
+var userDataDB = {};          //variable used to store user's data from mongoDB
 var userAccountsOnly = {}; //varaible to store user's accounts only
 var userAccountType;   //user account type
 const app = express();
@@ -58,9 +58,6 @@ const { Db } = require("mongodb");
 const uri = "mongodb+srv://omer_husain:web322n1a@clientcollection.ftofq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const dbName = "web322";
 const objCollection = "Client Collection";
-
-
-
 
 //line below referenced from stackoverflow to properly link CSS and JS files. Also studying in textbook pg. 
 app.use(express.static(path.join(__dirname, '/public')));
@@ -120,7 +117,7 @@ app.post("/", (req, res) => {
 
         getUserDataDB(req.MySession.user).then(() => {
 
-            console.log(`user data captured from mongo for user: ${userData.Username}`);
+            console.log(`user data captured from mongo for user: ${userDataDB.Username}`);
 
             updateUserAccounts();
 
@@ -163,13 +160,13 @@ app.post('/bankForm', (req, res) => {
 
     };
     console.log(`user name: ${req.MySession.user}`);
-    console.log(`can create chequing: ${canCreateChequing(userData)}`);
-    console.log(`can create savings: ${canCreateSavings(userData)}`);
-    console.log(`the user has ${checkNumAccounts(userData)}`);
-    console.log(`Can create account? : ${canCreateAccount(userData)}`)
+    console.log(`can create chequing: ${canCreateChequing(userDataDB)}`);
+    console.log(`can create savings: ${canCreateSavings(userDataDB)}`);
+    console.log(`the user has ${checkNumAccounts(userDataDB)}`);
+    console.log(`Can create account? : ${canCreateAccount(userDataDB)}`)
 
 
-    if (selectionValue == "openAccount" && canCreateAccount(userData)) {
+    if (selectionValue == "openAccount" && canCreateAccount(userDataDB)) {
         res.render('accountopen', {});
         return;   //exits POST function
     }
@@ -206,7 +203,7 @@ app.post("/returnBank", (req, res) => {
 app.post('/accountOpen', (req, res) => {
     console.log("account open");
     userAccountType = req.body.accountSelection;
-    var acctNum = createAcctNum();
+    var acctNum = createAcctNum(req, res);
     console.log("This data is being fed into createAccount:  " + acctNum);
     createAccount(acctNum, userAccountType, req, res);
 
@@ -288,7 +285,6 @@ function writeFileData(data, path) {
         console.log("File successfully updated.");
     });
 }
-
 
 
 function userValidation(username, password) {
@@ -384,7 +380,7 @@ function selectionRender(selection, res, myAccount) {
     }
 }
 
-function checkValidAccount(accountNum) {   // checks if account is in accountsData javascript object
+function checkValidAccount(accountNum) {   // checks if account is in accountsData javascript object (old function assignemt2)
 
     if (accountsData.hasOwnProperty(formatAccNumber(accountNum))) {
         //create an myAccount object with all necessary data needed to render
@@ -402,6 +398,7 @@ function checkValidAccount(accountNum) {   // checks if account is in accountsDa
 function formatAccNumber(number, size = 7) {   //Function to add leading zero(s)   default value is of size is 7 to match account data
 
     formatNumber = number.padStart(size, '0');
+    formatNumber = "1" + formatNumber.slice(1);
     console.log(formatNumber);
     return formatNumber;
 
@@ -439,7 +436,8 @@ function withdrawAccount(acctNum, amount, req, res) {
     var messageData = {
         message: statusMessage(4),
         visible: true,
-        user: req.MySession.user
+        user: req.MySession.user,
+        accounts: userAccountsOnly
     };
 
     var userData = {
@@ -487,7 +485,6 @@ function withdrawAccount(acctNum, amount, req, res) {
 }
 
 
-
 function createAccount(acctNum, userAccountType, req, res) {
     let tempObj = {};
     var change = false;
@@ -506,7 +503,7 @@ function createAccount(acctNum, userAccountType, req, res) {
 
         insertUserAccountsDB(acctNum, userAccountType).then(() => {
             console.log(`${userAccountType} Account # ${acctNum} saved to mongoDB`);
-            getUserDataDB(userData['Username']).then(() => {
+            getUserDataDB(userDataDB['Username']).then(() => {
 
                 updateUserAccounts();
 
@@ -542,31 +539,50 @@ function checkLastID() {
     return lastID;
 }
 
-function createAcctNum() {
+function createAcctNum(req, res) {
     tempObj = readFileData(accountsPath);
     lastID = checkLastID();
     var tempNum;
     var acctNumber;
-    tempNum = parseInt(lastID, 10);
-    tempNum++;
-    acctNumber = tempNum.toString();
 
-    acctNumber = formatAccNumber(acctNumber);
+    if (canCreateChequing(userDataDB)) {
+        console.log("account number should be subtracted by 1");
+        tempNum = parseInt(userAccountsOnly['Savings'], 10);
+        tempNum = tempNum - 1;
+        acctNumber = tempNum.toString();
+    } else if (canCreateSavings(userDataDB)) {
+        console.log("account number should be added by 1");
+        tempNum = parseInt(userAccountsOnly['Chequing'], 10);
+        tempNum = tempNum + 1;
+        acctNumber = tempNum.toString();
+    } else {
+        console.log("account number should be brand new");
+        tempNum = parseInt(lastID, 10);
+        if (tempNum % 2 === 0) {
+            tempNum += 9;
+        } else {
+            tempNum += 10;
+        }
 
-    while (tempObj.hasOwnProperty(acctNumber)) {
+        acctNumber = tempNum.toString();
+    }
+
+    while (tempObj.hasOwnProperty(acctNumber)) { //will keep checking till gets closest account number not used - avoid conflict
         console.log("Account number already exists: " + tempObj.hasOwnProperty(acctNumber));
         tempNum++;
         acctNumber = tempNum.toString();
     }
-
     acctNumber = formatAccNumber(acctNumber);
+
+
+
     console.log(acctNumber);
     return acctNumber;
 }
 
-function canCreateAccount(userData) {
-    if (canCreateChequing(userData) || canCreateSavings(userData)) {
-        if (checkNumAccounts(userData) < maxAccountLimit) {
+function canCreateAccount(userDataDB) {
+    if (canCreateChequing(userDataDB) || canCreateSavings(userDataDB)) {
+        if (checkNumAccounts(userDataDB) < maxAccountLimit) {
             return true;
         }
     }
@@ -575,39 +591,38 @@ function canCreateAccount(userData) {
     }
 }
 
-function canCreateChequing(userData) {
-    if (userData['Chequing']) {
+function canCreateChequing(userDataDB) {
+    if (userDataDB['Chequing']) {
         return false;
     } else {
         return true;
     }
 }
-function canCreateSavings(userData) {
-    if (userData['Savings']) {
+function canCreateSavings(userDataDB) {
+    if (userDataDB['Savings']) {
         return false;
     } else {
         return true;
     }
 }
 
-function checkNumAccounts(userData) {
+function checkNumAccounts(userDataDB) {
 
     let count = 0;
 
-    if (userData['Chequing'] === null && userData['Savings'] === null) {
+    if (userDataDB['Chequing'] === null && userDataDB['Savings'] === null) {
         count = 0;
-    } else if (userData['Chequing'] && userData['Savings'] === null) {
+    } else if (userDataDB['Chequing'] && userDataDB['Savings'] === null) {
         count = 1;
-    } else if (userData['Chequing'] === null && userData['Savings']) {
+    } else if (userDataDB['Chequing'] === null && userDataDB['Savings']) {
         count = 1;
-    } else if (userData['Chequing'] && userData['Savings']) {
+    } else if (userDataDB['Chequing'] && userDataDB['Savings']) {
         count = 2;
     }
 
     return count;
 
 }
-
 
 async function getUserDataDB(user) {  //gets user related  data from database and saves to userAccounts or Null if not found
 
@@ -623,7 +638,7 @@ async function getUserDataDB(user) {  //gets user related  data from database an
     try {
         result = await db.collection(objCollection).findOne({ Username: user });       //  returns null when findOne was unsuccessful
         console.log(result);
-        userData = result;
+        userDataDB = result;
     } catch (err) {
         console.log(`err = ${err}`);
     }
@@ -633,17 +648,17 @@ async function getUserDataDB(user) {  //gets user related  data from database an
 
 function updateUserAccounts() {
 
-    if (userData['Chequing']) {
-        console.log(userData['Chequing']);
-        Object.assign(userAccountsOnly, { Chequing: userData['Chequing'] });
+    if (userDataDB['Chequing']) {
+        console.log(userDataDB['Chequing']);
+        Object.assign(userAccountsOnly, { Chequing: userDataDB['Chequing'] });
     }
-    if (userData['Savings']) {
-        console.log(userData['Savings']);
-        Object.assign(userAccountsOnly, { Savings: userData['Savings'] });
+    if (userDataDB['Savings']) {
+        console.log(userDataDB['Savings']);
+        Object.assign(userAccountsOnly, { Savings: userDataDB['Savings'] });
     }
 
-    if (!(userData['Chequing']) && !(userData['Savings'])) {
-        userAccountsOnly = null;
+    if (!(userDataDB['Chequing']) && !(userDataDB['Savings'])) {
+        userAccountsOnly = {};
     }
 
     console.log(userAccountsOnly);
@@ -671,7 +686,7 @@ async function insertUserAccountsDB(acctNum, userAccountType) {
     try {
 
         result = await db.collection(objCollection).findOneAndUpdate(
-            { Username: userData['Username'] },
+            { Username: userDataDB['Username'] },
             {
                 $set: updateValue                                                     //  use $set to ensure only the identified fields are affected
 
